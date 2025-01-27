@@ -161,20 +161,28 @@ updateStats();
         localStorage.setItem("commands", JSON.stringify(commands));
     }
 
-    function exportToCSV() {
-        let csvContent = "Nom,Quantité,Taille,Finition,Type,Carton,Date ajoutée,Statut\n";
-        commands.forEach(command => {
-            csvContent += `${command.name},${command.quantity},${command.size},${command.finish},${command.type},${command.carton},${command.dateAdded},${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}\n`;
-        });
-
-        let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        let link = document.createElement("a");
-        link.setAttribute("href", URL.createObjectURL(blob));
-        link.setAttribute("download", "commandes_badges.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+function exportToCSV() {
+    if (commands.length === 0) {
+        alert("Aucune commande à exporter.");
+        return;
     }
+
+    let csvContent = "Nom,Quantité,Taille,Finition,Type,Carton,Date ajoutée,Statut\n";
+    commands.forEach(command => {
+        csvContent += `"${command.name}","${command.quantity}","${command.size}","${command.finish}","${command.type}","${command.carton}","${command.dateAdded}","${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}"\n`;
+    });
+
+    let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "commandes_badges.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+window.exportToCSV = exportToCSV;
+
 
     window.addCommand = addCommand;
     window.completeCommand = completeCommand;
