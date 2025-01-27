@@ -111,7 +111,8 @@ updateStats();
             finish: finishInput.value,
             type: typeInput.value,
             carton: cartonInput.value,
-            dateAdded: new Date().toLocaleString(),
+            dateAdded: new Date().toISOString(),
+
             completed: false,
             paused: false
         };
