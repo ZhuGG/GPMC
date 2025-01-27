@@ -142,6 +142,8 @@ updateStats();
     function deleteCommand(index) {
         commands.splice(index, 1);
         saveCommands();
+        updateStats();
+
         renderCommands();
     }
 
