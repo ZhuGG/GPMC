@@ -8,6 +8,61 @@ document.addEventListener("DOMContentLoaded", function () {
     const commandList = document.getElementById("commandList");
 
     let commands = JSON.parse(localStorage.getItem("commands")) || [];
+    // Récupération des stats stockées
+let stats = JSON.parse(localStorage.getItem("stats")) || {
+    badgesToday: 0,
+    badgesWeek: 0,
+    badgesMonth: 0,
+    lastUpdate: new Date().toISOString().split('T')[0]  // Stocke la dernière mise à jour
+};
+
+function updateStats() {
+    let today = new Date().toISOString().split('T')[0]; // Date du jour
+    let currentWeek = getWeekNumber(new Date());  // Numéro de la semaine actuelle
+    let currentMonth = new Date().getMonth(); // Mois actuel
+
+    let badgesToday = 0, badgesWeek = 0, badgesMonth = 0;
+
+    commands.forEach(command => {
+        let commandDate = new Date(command.dateAdded).toISOString().split('T')[0];
+        let commandWeek = getWeekNumber(new Date(command.dateAdded));
+        let commandMonth = new Date(command.dateAdded).getMonth();
+
+        if (commandDate === today) {
+            badgesToday += parseInt(command.quantity);
+        }
+        if (commandWeek === currentWeek) {
+            badgesWeek += parseInt(command.quantity);
+        }
+        if (commandMonth === currentMonth) {
+            badgesMonth += parseInt(command.quantity);
+        }
+    });
+
+    stats.badgesToday = badgesToday;
+    stats.badgesWeek = badgesWeek;
+    stats.badgesMonth = badgesMonth;
+    stats.lastUpdate = today;
+
+    localStorage.setItem("stats", JSON.stringify(stats));
+
+    document.getElementById("badgesToday").textContent = badgesToday;
+    document.getElementById("badgesWeek").textContent = badgesWeek;
+    document.getElementById("badgesMonth").textContent = badgesMonth;
+}
+
+// Fonction pour récupérer le numéro de la semaine
+function getWeekNumber(d) {
+    let date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    let dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    let yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    return Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+}
+
+// Appel de la mise à jour des stats au démarrage
+updateStats();
+
 
     function renderCommands(filter = "all") {
         commandList.innerHTML = "";
