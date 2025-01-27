@@ -122,6 +122,8 @@ updateStats();
         commands.push(commandData);
         saveCommands();
         updateStats();
+        // updateStats();
+
         renderCommands();
         commandInput.value = "";
         quantityInput.value = "";
@@ -134,6 +136,8 @@ updateStats();
         saveCommands();
         console.log("Mise à jour des stats exécutée !");
 updateStats();
+        // updateStats();
+
         renderCommands();
     }
 
@@ -148,6 +152,8 @@ updateStats();
         commands.splice(index, 1);
         saveCommands();
         updateStats();
+        // updateStats();
+
         renderCommands();
     }
 
