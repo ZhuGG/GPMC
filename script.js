@@ -181,7 +181,31 @@ function exportCSV() {
 }
 
 // ✅ Exposer exportCSV() à `window` pour qu'il soit accessible dans `index.html`
-window.exportCSV = exportCSV;
+document.addEventListener("DOMContentLoaded", function () {
+    function exportCSV() {
+        if (commands.length === 0) {
+            alert("Aucune commande à exporter.");
+            return;
+        }
+
+        let csvContent = "Nom,Quantité,Taille,Finition,Type,Carton,Date ajoutée,Statut\n";
+        commands.forEach(command => {
+            csvContent += `"${command.name}","${command.quantity}","${command.size}","${command.finish}","${command.type}","${command.carton}","${command.dateAdded}","${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}"\n`;
+        });
+
+        let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        let link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "commandes_badges.csv";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Assigner la fonction à window APRÈS sa déclaration
+    window.exportCSV = exportCSV;
+});
+
 console.log("✅ exportCSV() est bien accessible via window !");
 
 
