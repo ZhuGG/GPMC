@@ -185,3 +185,6 @@ updateStats();
 
     renderCommands();
 });
+
+window.exportToCSV = exportToCSV;
+
