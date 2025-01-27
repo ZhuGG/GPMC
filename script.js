@@ -121,8 +121,8 @@ updateStats();
 
         commands.push(commandData);
         saveCommands();
-        updateStats();
-        // updateStats();
+        //updateStats();
+     
 
         renderCommands();
         commandInput.value = "";
@@ -135,8 +135,8 @@ updateStats();
         commands[index].paused = false;  // Annule la pause si terminé
         saveCommands();
         console.log("Mise à jour des stats exécutée !");
-updateStats();
-        // updateStats();
+//updateStats();
+       
 
         renderCommands();
     }
@@ -151,8 +151,8 @@ updateStats();
     function deleteCommand(index) {
         commands.splice(index, 1);
         saveCommands();
-        updateStats();
-        // updateStats();
+        //updateStats();
+        
 
         renderCommands();
     }
