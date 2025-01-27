@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tableau de Bord - Production Badges</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
@@ -92,54 +93,137 @@
 <body>
     <div class="container">
         <h1>Tableau de Bord - Production Badges</h1>
+        
+      <!-- <h2>Statistiques de Production</h2>
+<div class="stats">
+    <p>🔹 Badges produits aujourd'hui : <span id="badgesToday">0</span></p>
+    <p>🔹 Badges produits cette semaine : <span id="badgesWeek">0</span></p>
+    <p>🔹 Badges produits ce mois-ci : <span id="badgesMonth">0</span></p>
+</div>-->
 
-        <!-- Formulaire d’ajout de commande -->
+        
         <h2>Ajouter une Commande</h2>
-        <div class="flex-input">
-            <input type="text" id="commandInput" placeholder="Nom de la commande..." autofocus />
-            <input type="number" id="quantityInput" placeholder="Quantité" min="1" />
-            <select id="sizeInput">
-                <option value="28mm">28mm</option>
-                <option value="38mm">38mm</option>
-                <option value="45mm">45mm</option>
-                <option value="58mm">58mm</option>
-                <option value="89mm">89mm</option>
-            </select>
-            <select id="finishInput">
-                <option value="Mat">Mat</option>
-                <option value="Brillant">Brillant</option>
-            </select>
-            <select id="typeInput">
-                <option value="Épingle">Épingle</option>
-                <option value="Aimant décoratif">Aimant décoratif</option>
-                <option value="Magnétique textile">Magnétique textile</option>
-            </select>
-            <select id="cartonInput">
-                <option value="Boîte A11">Boîte A11</option>
-                <option value="Boîte A12">Boîte A12</option>
-                <option value="Boîte A14">Boîte A14</option>
-            </select>
-            <!-- Le bouton appelle addCommand() définie dans script.js -->
-            <button onclick="addCommand()">Ajouter</button>
-        </div>
+<div class="flex-input">
+    <input type="text" id="commandInput" placeholder="Nom de la commande..." autofocus>
+    <input type="number" id="quantityInput" placeholder="Quantité" min="1">
+    <select id="sizeInput">
+        <option value="28mm">28mm</option>
+        <option value="38mm">38mm</option>
+        <option value="45mm">45mm</option>
+        <option value="58mm">58mm</option>
+        <option value="89mm">89mm</option>
+    </select>
+    <select id="finishInput">
+        <option value="Mat">Mat</option>
+        <option value="Brillant">Brillant</option>
+    </select>
+    <select id="typeInput">
+        <option value="Épingle">Épingle</option>
+        <option value="Aimant décoratif">Aimant décoratif</option>
+        <option value="Magnétique textile">Magnétique textile</option>
+    </select>
+    <select id="cartonInput">
+        <option value="Boîte A11">Boîte A11</option>
+        <option value="Boîte A12">Boîte A12</option>
+        <option value="Boîte A14">Boîte A14</option>
+    </select>
+    <button onclick="addCommand()">Ajouter</button>
+</div>
 
-        <h2>Commandes en cours</h2>
-        <div class="btn-container">
-            <!-- Filtrage par statut via renderCommands('...') -->
-            <button onclick="renderCommands('all')">Toutes</button>
-            <button onclick="renderCommands('active')">En attente</button>
-            <button onclick="renderCommands('paused')">En pause</button>
-            <button onclick="renderCommands('completed')">Terminées</button>
-        </div>
+<h2>Commandes en cours</h2>
+<div class="btn-container">
+    <button onclick="filterCommands('all')">Toutes</button>
+    <button onclick="filterCommands('active')">En attente</button>
+    <button onclick="filterCommands('paused')">En pause</button>
+    <button onclick="filterCommands('completed')">Terminées</button>
+</div>
 
-        <!-- Le bouton CSV appelle exportCSV() définie dans script.js -->
-        <button onclick="exportCSV()">Exporter en CSV</button>
+<button onclick="exportCSV()">CSV</button>
 
-        <!-- Liste des commandes -->
-        <div class="command-list" id="commandList"></div>
-    </div>
+<div class="command-list" id="commandList"></div>
 
-    <!-- On charge le script après le HTML -->
-    <script src="script.js"></script>
+
+    <script>
+        let commands = JSON.parse(localStorage.getItem("commands")) || [];
+
+        function addCommand() {
+            let commandInput = document.getElementById("commandInput");
+            let quantityInput = document.getElementById("quantityInput");
+            let sizeInput = document.getElementById("sizeInput");
+
+            let commandData = {
+                name: commandInput.value.trim(),
+                quantity: quantityInput.value.trim(),
+                size: sizeInput.value,
+                dateAdded: new Date().toLocaleString(),
+                dateCompleted: "",
+                paused: false
+            };
+
+            if (commandData.name === "" || commandData.quantity === "") return;
+
+            commands.push(commandData);
+            saveCommands();
+            renderCommands();
+            commandInput.value = "";
+            quantityInput.value = "";
+            commandInput.focus();
+        }
+
+        function saveCommands() {
+            localStorage.setItem("commands", JSON.stringify(commands));
+        }
+
+        function renderCommands(filter = "all") {
+            let commandList = document.getElementById("commandList");
+            commandList.innerHTML = "";
+
+            let filteredCommands = commands.filter(command => 
+                filter === "all" || 
+                (filter === "active" && !command.dateCompleted && !command.paused) || 
+                (filter === "paused" && command.paused) ||
+                (filter === "completed" && command.dateCompleted)
+            );
+
+            filteredCommands.forEach((command, index) => {
+                let commandDiv = document.createElement("div");
+                commandDiv.className = "command";
+                if (command.paused) commandDiv.classList.add("paused");
+                if (command.dateCompleted) commandDiv.classList.add("completed");
+
+                commandDiv.innerHTML = `
+                    <span>${command.name} - ${command.quantity} badges (${command.size})</span>
+                    <br><small>Ajouté : ${command.dateAdded}</small>
+                    <br><small>Terminé : ${command.dateCompleted ? command.dateCompleted : "En cours"}</small>
+                    <button onclick="completeCommand(${index})">Fait</button>
+                    <button onclick="togglePause(${index})">${command.paused ? "Reprendre" : "Pause"}</button>
+                    <button onclick="deleteCommand(${index})">Supprimer</button>
+                `;
+                commandList.appendChild(commandDiv);
+            });
+        }
+
+        function completeCommand(index) {
+            commands[index].dateCompleted = commands[index].dateCompleted ? "" : new Date().toLocaleString();
+            saveCommands();
+            renderCommands();
+        }
+
+        function togglePause(index) {
+            commands[index].paused = !commands[index].paused;
+            saveCommands();
+            renderCommands();
+        }
+
+        function deleteCommand(index) {
+            commands.splice(index, 1);
+            saveCommands();
+            renderCommands();
+        }
+
+        renderCommands();
+    </script>
+         <script src="script.js"></script>
 </body>
+   
 </html>
