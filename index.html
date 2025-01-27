@@ -95,29 +95,45 @@
         <h1>Tableau de Bord - Production Badges</h1>
         
         <h2>Ajouter une Commande</h2>
-        <div class="flex-input">
-            <input type="text" id="commandInput" placeholder="Nom de la commande..." autofocus>
-            <input type="number" id="quantityInput" placeholder="Quantité" min="1">
-            <select id="sizeInput">
-                <option value="28mm">28mm</option>
-                <option value="38mm">38mm</option>
-                <option value="45mm">45mm</option>
-                <option value="58mm">58mm</option>
-                <option value="89mm">89mm</option>
-            </select>
-            <button onclick="addCommand()">Ajouter</button>
-        </div>
+<div class="flex-input">
+    <input type="text" id="commandInput" placeholder="Nom de la commande..." autofocus>
+    <input type="number" id="quantityInput" placeholder="Quantité" min="1">
+    <select id="sizeInput">
+        <option value="28mm">28mm</option>
+        <option value="38mm">38mm</option>
+        <option value="45mm">45mm</option>
+        <option value="58mm">58mm</option>
+        <option value="89mm">89mm</option>
+    </select>
+    <select id="finishInput">
+        <option value="Mat">Mat</option>
+        <option value="Brillant">Brillant</option>
+    </select>
+    <select id="typeInput">
+        <option value="Épingle">Épingle</option>
+        <option value="Aimant décoratif">Aimant décoratif</option>
+        <option value="Magnétique textile">Magnétique textile</option>
+    </select>
+    <select id="cartonInput">
+        <option value="Boîte A11">Boîte A11</option>
+        <option value="Boîte A12">Boîte A12</option>
+        <option value="Boîte A14">Boîte A14</option>
+    </select>
+    <button onclick="addCommand()">Ajouter</button>
+</div>
 
-        <h2>Commandes en cours</h2>
-        <div class="btn-container">
-            <button onclick="filterCommands('all')">Toutes</button>
-            <button onclick="filterCommands('active')">En attente</button>
-            <button onclick="filterCommands('paused')">En pause</button>
-            <button onclick="filterCommands('completed')">Terminées</button>
-        </div>
+<h2>Commandes en cours</h2>
+<div class="btn-container">
+    <button onclick="filterCommands('all')">Toutes</button>
+    <button onclick="filterCommands('active')">En attente</button>
+    <button onclick="filterCommands('paused')">En pause</button>
+    <button onclick="filterCommands('completed')">Terminées</button>
+</div>
 
-        <div class="command-list" id="commandList"></div>
-    </div>
+<button onclick="exportToCSV()">📤 Exporter CSV</button>
+
+<div class="command-list" id="commandList"></div>
+
 
     <script>
         let commands = JSON.parse(localStorage.getItem("commands")) || [];
