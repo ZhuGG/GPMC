@@ -2,6 +2,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const commandInput = document.getElementById("commandInput");
     const quantityInput = document.getElementById("quantityInput");
     const sizeInput = document.getElementById("sizeInput");
+    const finishInput = document.getElementById("finishInput");
+    const typeInput = document.getElementById("typeInput");
+    const cartonInput = document.getElementById("cartonInput");
     const commandList = document.getElementById("commandList");
 
     let commands = JSON.parse(localStorage.getItem("commands")) || [];
@@ -24,6 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             commandDiv.innerHTML = `
                 <span>${command.name} - ${command.quantity} badges (${command.size})</span>
+                <br><small>Finition : ${command.finish} | Type : ${command.type} | Carton : ${command.carton}</small>
                 <br><small>Ajouté : ${command.dateAdded}</small>
                 <br><small>Statut : ${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}</small>
                 <div class="btn-container">
@@ -41,6 +45,9 @@ document.addEventListener("DOMContentLoaded", function () {
             name: commandInput.value.trim(),
             quantity: quantityInput.value.trim(),
             size: sizeInput.value,
+            finish: finishInput.value,
+            type: typeInput.value,
+            carton: cartonInput.value,
             dateAdded: new Date().toLocaleString(),
             completed: false,
             paused: false
@@ -80,11 +87,27 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.setItem("commands", JSON.stringify(commands));
     }
 
+    function exportToCSV() {
+        let csvContent = "Nom,Quantité,Taille,Finition,Type,Carton,Date ajoutée,Statut\n";
+        commands.forEach(command => {
+            csvContent += `${command.name},${command.quantity},${command.size},${command.finish},${command.type},${command.carton},${command.dateAdded},${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}\n`;
+        });
+
+        let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        let link = document.createElement("a");
+        link.setAttribute("href", URL.createObjectURL(blob));
+        link.setAttribute("download", "commandes_badges.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     window.addCommand = addCommand;
     window.completeCommand = completeCommand;
     window.togglePause = togglePause;
     window.deleteCommand = deleteCommand;
     window.renderCommands = renderCommands;
+    window.exportToCSV = exportToCSV;
 
     renderCommands();
 });
