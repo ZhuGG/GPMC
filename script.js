@@ -161,27 +161,26 @@ updateStats();
         localStorage.setItem("commands", JSON.stringify(commands));
     }
 
-function exportToCSV() {
+function exportCSV() {
     if (commands.length === 0) {
         alert("Aucune commande à exporter.");
         return;
     }
 
-    let csvContent = "Nom,Quantité,Taille,Finition,Type,Carton,Date ajoutée,Statut\n";
+    let csvContent = "data:text/csv;charset=utf-8,Nom,Quantité,Taille,Type,Finition,Carton,Date Ajoutée,Date Terminée\n";
     commands.forEach(command => {
-        csvContent += `"${command.name}","${command.quantity}","${command.size}","${command.finish}","${command.type}","${command.carton}","${command.dateAdded}","${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}"\n`;
+        csvContent += `${command.name},${command.quantity},${command.size},${command.type},${command.finish},${command.carton},${command.dateAdded},${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}\n`;
     });
 
-    let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     let link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
+    link.href = encodeURI(csvContent);
     link.download = "commandes_badges.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 }
 
-window.exportToCSV = exportToCSV;
+window.exportCSV = exportCSV;
 
 
     window.addCommand = addCommand;
