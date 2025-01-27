@@ -6,49 +6,198 @@
     <title>Tableau de Bord - Production Badges</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
         body {
             font-family: 'Orbitron', sans-serif;
-            background: #0a001f;
+            background-color: #05001a;
             color: #0ff;
-            text-align: center;
+            margin: 0;
             padding: 20px;
+            text-align: center;
         }
         .container {
-            background: #220044;
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 600px;
+            max-width: 800px;
             margin: auto;
-            box-shadow: 0px 0px 10px #ff00ff;
+            background: #0a001f;
+            padding: 20px;
+            box-shadow: 0px 0px 15px #ff00ff;
+            border-radius: 8px;
+            border: 2px solid #ff00ff;
         }
-        input, select, button {
-            margin: 5px;
+        h1 {
+            text-shadow: 2px 2px 10px #ff00ff;
+        }
+        .command-list {
+            margin-top: 20px;
+        }
+        .command {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #220044;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            color: #00ffff;
+            flex-wrap: wrap;
+            transition: all 0.3s ease-in-out;
+            border: 1px solid #ff00ff;
+        }
+        .completed {
+            background: #008080;
+            text-decoration: line-through;
+        }
+        .paused {
+            background: #444;
+            color: #ffcc00;
+        }
+        button {
             padding: 10px;
             border: 2px solid #ff00ff;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'Orbitron', sans-serif;
             background: #000;
             color: #ff00ff;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #ff00ff;
+            color: #000;
+        }
+        select, input {
+            padding: 10px;
+            border: 2px solid #ff00ff;
+            border-radius: 5px;
+            width: 100%;
+            margin-bottom: 10px;
+            background: #220044;
+            color: #00ffff;
             font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            text-align: center;
+        }
+        .flex-input {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Tableau de Bord - Production Badges</h1>
-        <input type="text" id="commandName" placeholder="Nom de la commande">
-        <button onclick="addCommand()">Ajouter</button>
-        <ul id="commandList"></ul>
-    </div>
-    <script>
-        function addCommand() {
-            let name = document.getElementById("commandName").value;
-            if (name.trim() !== "") {
-                let li = document.createElement("li");
-                li.textContent = name;
-                document.getElementById("commandList").appendChild(li);
-            }
-        }
-    </script>
-</body> 
-<script src="script.js"></script>
+        
+        <h2>Ajouter une Commande</h2>
+        <div class="flex-input">
+            <input type="text" id="commandInput" placeholder="Nom de la commande..." autofocus>
+            <input type="number" id="quantityInput" placeholder="Quantité" min="1">
+            <select id="sizeInput">
+                <option value="28mm">28mm</option>
+                <option value="38mm">38mm</option>
+                <option value="45mm">45mm</option>
+                <option value="58mm">58mm</option>
+                <option value="89mm">89mm</option>
+            </select>
+            <button onclick="addCommand()">Ajouter</button>
+        </div>
 
+        <h2>Commandes en cours</h2>
+        <div class="btn-container">
+            <button onclick="filterCommands('all')">Toutes</button>
+            <button onclick="filterCommands('active')">En attente</button>
+            <button onclick="filterCommands('paused')">En pause</button>
+            <button onclick="filterCommands('completed')">Terminées</button>
+        </div>
+
+        <div class="command-list" id="commandList"></div>
+    </div>
+
+    <script>
+        let commands = JSON.parse(localStorage.getItem("commands")) || [];
+
+        function addCommand() {
+            let commandInput = document.getElementById("commandInput");
+            let quantityInput = document.getElementById("quantityInput");
+            let sizeInput = document.getElementById("sizeInput");
+
+            let commandData = {
+                name: commandInput.value.trim(),
+                quantity: quantityInput.value.trim(),
+                size: sizeInput.value,
+                dateAdded: new Date().toLocaleString(),
+                dateCompleted: "",
+                paused: false
+            };
+
+            if (commandData.name === "" || commandData.quantity === "") return;
+
+            commands.push(commandData);
+            saveCommands();
+            renderCommands();
+            commandInput.value = "";
+            quantityInput.value = "";
+            commandInput.focus();
+        }
+
+        function saveCommands() {
+            localStorage.setItem("commands", JSON.stringify(commands));
+        }
+
+        function renderCommands(filter = "all") {
+            let commandList = document.getElementById("commandList");
+            commandList.innerHTML = "";
+
+            let filteredCommands = commands.filter(command => 
+                filter === "all" || 
+                (filter === "active" && !command.dateCompleted && !command.paused) || 
+                (filter === "paused" && command.paused) ||
+                (filter === "completed" && command.dateCompleted)
+            );
+
+            filteredCommands.forEach((command, index) => {
+                let commandDiv = document.createElement("div");
+                commandDiv.className = "command";
+                if (command.paused) commandDiv.classList.add("paused");
+                if (command.dateCompleted) commandDiv.classList.add("completed");
+
+                commandDiv.innerHTML = `
+                    <span>${command.name} - ${command.quantity} badges (${command.size})</span>
+                    <br><small>Ajouté : ${command.dateAdded}</small>
+                    <br><small>Terminé : ${command.dateCompleted ? command.dateCompleted : "En cours"}</small>
+                    <button onclick="completeCommand(${index})">Fait</button>
+                    <button onclick="togglePause(${index})">${command.paused ? "Reprendre" : "Pause"}</button>
+                    <button onclick="deleteCommand(${index})">Supprimer</button>
+                `;
+                commandList.appendChild(commandDiv);
+            });
+        }
+
+        function completeCommand(index) {
+            commands[index].dateCompleted = commands[index].dateCompleted ? "" : new Date().toLocaleString();
+            saveCommands();
+            renderCommands();
+        }
+
+        function togglePause(index) {
+            commands[index].paused = !commands[index].paused;
+            saveCommands();
+            renderCommands();
+        }
+
+        function deleteCommand(index) {
+            commands.splice(index, 1);
+            saveCommands();
+            renderCommands();
+        }
+
+        renderCommands();
+    </script>
+</body>
 </html>
