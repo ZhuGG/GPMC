@@ -1,77 +1,19 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const commandInput = document.getElementById("commandInput");
-    const quantityInput = document.getElementById("quantityInput");
-    const sizeInput = document.getElementById("sizeInput");
-    const finishInput = document.getElementById("finishInput");
-    const typeInput = document.getElementById("typeInput");
-    const cartonInput = document.getElementById("cartonInput");
-    const commandList = document.getElementById("commandList");
+    console.log("Chargement de script.js OK");
 
+    // Récupération des éléments du DOM
+    const commandInput   = document.getElementById("commandInput");
+    const quantityInput  = document.getElementById("quantityInput");
+    const sizeInput      = document.getElementById("sizeInput");
+    const finishInput    = document.getElementById("finishInput");
+    const typeInput      = document.getElementById("typeInput");
+    const cartonInput    = document.getElementById("cartonInput");
+    const commandList    = document.getElementById("commandList");
+
+    // Récupération des données (localStorage)
     let commands = JSON.parse(localStorage.getItem("commands")) || [];
-    // Récupération des stats stockées
-let stats = JSON.parse(localStorage.getItem("stats")) || {
-    badgesToday: 0,
-    badgesWeek: 0,
-    badgesMonth: 0,
-    lastUpdate: new Date().toISOString().split('T')[0]  // Stocke la dernière mise à jour
-};
 
-function updateStats() {
-    let today = new Date().toISOString().split('T')[0]; // Date du jour
-    let currentWeek = getWeekNumber(new Date());  // Numéro de la semaine actuelle
-    let currentMonth = new Date().getMonth(); // Mois actuel
-
-    let badgesToday = 0, badgesWeek = 0, badgesMonth = 0;
-
-    commands.forEach(command => {
-        if (!command.completed) return;  // On ne compte que les commandes terminées
-
-       if (!command.dateAdded || isNaN(new Date(command.dateAdded).getTime())) {
-    console.warn("Commande avec date invalide ignorée :", command);
-    return;  // Ignore cette commande si la date est invalide
-}
-let commandDate = new Date(command.dateAdded).toISOString().split('T')[0];
-
-        let commandWeek = getWeekNumber(new Date(command.dateAdded));
-        let commandMonth = new Date(command.dateAdded).getMonth();
-
-        if (commandDate === today) {
-            badgesToday += parseInt(command.quantity);
-        }
-        if (commandWeek === currentWeek) {
-            badgesWeek += parseInt(command.quantity);
-        }
-        if (commandMonth === currentMonth) {
-            badgesMonth += parseInt(command.quantity);
-        }
-    });
-
-    stats.badgesToday = badgesToday;
-    stats.badgesWeek = badgesWeek;
-    stats.badgesMonth = badgesMonth;
-    stats.lastUpdate = today;
-
-    localStorage.setItem("stats", JSON.stringify(stats));
-
-    document.getElementById("badgesToday").textContent = badgesToday;
-    document.getElementById("badgesWeek").textContent = badgesWeek;
-    document.getElementById("badgesMonth").textContent = badgesMonth;
-}
-
-
-// Fonction pour récupérer le numéro de la semaine
-function getWeekNumber(d) {
-    let date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    let dayNum = date.getUTCDay() || 7;
-    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-    let yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-    return Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
-}
-
-// Appel de la mise à jour des stats au démarrage
-updateStats();
-
-
+    // --- Fonctions de gestion des commandes ---
     function renderCommands(filter = "all") {
         commandList.innerHTML = "";
 
@@ -112,19 +54,19 @@ updateStats();
             type: typeInput.value,
             carton: cartonInput.value,
             dateAdded: new Date().toISOString(),
-
             completed: false,
             paused: false
         };
 
-        if (commandData.name === "" || commandData.quantity === "") return;
+        if (commandData.name === "" || commandData.quantity === "") {
+            return;
+        }
 
         commands.push(commandData);
         saveCommands();
-        //updateStats();
-     
-
         renderCommands();
+        
+        // Réinitialise les champs
         commandInput.value = "";
         quantityInput.value = "";
         commandInput.focus();
@@ -132,18 +74,14 @@ updateStats();
 
     function completeCommand(index) {
         commands[index].completed = !commands[index].completed;
-        commands[index].paused = false;  // Annule la pause si terminé
+        commands[index].paused    = false;  // Si on complète, on annule la pause
         saveCommands();
-        console.log("Mise à jour des stats exécutée !");
-//updateStats();
-       
-
         renderCommands();
     }
 
     function togglePause(index) {
-        commands[index].paused = !commands[index].paused;
-        commands[index].completed = false;  // Annule "Terminé" si mis en pause
+        commands[index].paused    = !commands[index].paused;
+        commands[index].completed = false;  // Si on pause, on annule "Terminé"
         saveCommands();
         renderCommands();
     }
@@ -151,9 +89,6 @@ updateStats();
     function deleteCommand(index) {
         commands.splice(index, 1);
         saveCommands();
-        //updateStats();
-        
-
         renderCommands();
     }
 
@@ -161,38 +96,30 @@ updateStats();
         localStorage.setItem("commands", JSON.stringify(commands));
     }
 
-function exportCSV() {
-    if (commands.length === 0) {
-        alert("Aucune commande à exporter.");
-        return;
-    }
-
-    let csvContent = "data:text/csv;charset=utf-8,Nom,Quantité,Taille,Type,Finition,Carton,Date Ajoutée,Date Terminée\n";
-    commands.forEach(command => {
-        csvContent += `${command.name},${command.quantity},${command.size},${command.type},${command.finish},${command.carton},${command.dateAdded},${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}\n`;
-    });
-
-    let link = document.createElement("a");
-    link.href = encodeURI(csvContent);
-    link.download = "commandes_badges.csv";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-// ✅ Exposer exportCSV() à `window` pour qu'il soit accessible dans `index.html`
-document.addEventListener("DOMContentLoaded", function () {
+    // --- Fonction d'export CSV ---
     function exportCSV() {
         if (commands.length === 0) {
             alert("Aucune commande à exporter.");
             return;
         }
 
+        // En-tête CSV
         let csvContent = "Nom,Quantité,Taille,Finition,Type,Carton,Date ajoutée,Statut\n";
+
+        // Contenu CSV
         commands.forEach(command => {
-            csvContent += `"${command.name}","${command.quantity}","${command.size}","${command.finish}","${command.type}","${command.carton}","${command.dateAdded}","${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}"\n`;
+            let statut = command.completed ? "Terminé" : (command.paused ? "En pause" : "En cours");
+            csvContent += `"${command.name}",`
+                        + `"${command.quantity}",`
+                        + `"${command.size}",`
+                        + `"${command.finish}",`
+                        + `"${command.type}",`
+                        + `"${command.carton}",`
+                        + `"${command.dateAdded}",`
+                        + `"${statut}"\n`;
         });
 
+        // Création du fichier CSV
         let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         let link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
@@ -202,51 +129,15 @@ document.addEventListener("DOMContentLoaded", function () {
         document.body.removeChild(link);
     }
 
-    // Assigner la fonction à window APRÈS sa déclaration
-    window.exportCSV = exportCSV;
-});
+    // --- Rendre les fonctions accessibles depuis HTML (ou d'autres scripts) ---
+    window.addCommand       = addCommand;
+    window.completeCommand  = completeCommand;
+    window.togglePause      = togglePause;
+    window.deleteCommand    = deleteCommand;
+    window.renderCommands   = renderCommands;
+    window.exportCSV        = exportCSV;
 
-console.log("✅ exportCSV() est bien accessible via window !");
-
-
-    window.addCommand = addCommand;
-    window.completeCommand = completeCommand;
-    window.togglePause = togglePause;
-    window.deleteCommand = deleteCommand;
-    window.renderCommands = renderCommands;
-    window.exportToCSV = exportToCSV;
-
+    // Au chargement, on rend la liste
     renderCommands();
+    console.log("Toutes les fonctions sont prêtes !");
 });
-
-window.exportToCSV = exportToCSV;
-
-document.addEventListener("DOMContentLoaded", function () {
-    function exportCSV() {
-        if (commands.length === 0) {
-            alert("Aucune commande à exporter.");
-            return;
-        }
-
-        let csvContent = "Nom,Quantité,Taille,Finition,Type,Carton,Date ajoutée,Statut\n";
-        commands.forEach(command => {
-            csvContent += `"${command.name}","${command.quantity}","${command.size}","${command.finish}","${command.type}","${command.carton}","${command.dateAdded}","${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}"\n`;
-        });
-
-        let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        let link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "commandes_badges.csv";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    console.log("✅ exportCSV() est bien définie et attachée à window !");
-    window.exportCSV = exportCSV;  // ✅ Attachée globalement
-
-    // Vérifier si elle est bien définie après chargement
-    console.log("Test après attachement :", window.exportCSV);
-});
-
-
