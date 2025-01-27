@@ -24,6 +24,8 @@ function updateStats() {
     let badgesToday = 0, badgesWeek = 0, badgesMonth = 0;
 
     commands.forEach(command => {
+        if (!command.completed) return;  // On ne compte que les commandes terminées
+
         let commandDate = new Date(command.dateAdded).toISOString().split('T')[0];
         let commandWeek = getWeekNumber(new Date(command.dateAdded));
         let commandMonth = new Date(command.dateAdded).getMonth();
@@ -50,6 +52,7 @@ function updateStats() {
     document.getElementById("badgesWeek").textContent = badgesWeek;
     document.getElementById("badgesMonth").textContent = badgesMonth;
 }
+
 
 // Fonction pour récupérer le numéro de la semaine
 function getWeekNumber(d) {
@@ -112,6 +115,8 @@ updateStats();
 
         commands.push(commandData);
         saveCommands();
+        updateStats();
+
         renderCommands();
         commandInput.value = "";
         quantityInput.value = "";
@@ -122,6 +127,8 @@ updateStats();
         commands[index].completed = !commands[index].completed;
         commands[index].paused = false;  // Annule la pause si terminé
         saveCommands();
+        updateStats();
+
         renderCommands();
     }
 
