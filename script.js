@@ -180,7 +180,9 @@ function exportCSV() {
     document.body.removeChild(link);
 }
 
+// ✅ Exposer exportCSV() à `window` pour qu'il soit accessible dans `index.html`
 window.exportCSV = exportCSV;
+console.log("✅ exportCSV() est bien accessible via window !");
 
 
     window.addCommand = addCommand;
