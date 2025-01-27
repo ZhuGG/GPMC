@@ -26,7 +26,12 @@ function updateStats() {
     commands.forEach(command => {
         if (!command.completed) return;  // On ne compte que les commandes terminées
 
-        let commandDate = new Date(command.dateAdded).toISOString().split('T')[0];
+       if (!command.dateAdded || isNaN(new Date(command.dateAdded).getTime())) {
+    console.warn("Commande avec date invalide ignorée :", command);
+    return;  // Ignore cette commande si la date est invalide
+}
+let commandDate = new Date(command.dateAdded).toISOString().split('T')[0];
+
         let commandWeek = getWeekNumber(new Date(command.dateAdded));
         let commandMonth = new Date(command.dateAdded).getMonth();
 
