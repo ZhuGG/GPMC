@@ -197,3 +197,32 @@ console.log("✅ exportCSV() est bien accessible via window !");
 
 window.exportToCSV = exportToCSV;
 
+document.addEventListener("DOMContentLoaded", function () {
+    function exportCSV() {
+        if (commands.length === 0) {
+            alert("Aucune commande à exporter.");
+            return;
+        }
+
+        let csvContent = "Nom,Quantité,Taille,Finition,Type,Carton,Date ajoutée,Statut\n";
+        commands.forEach(command => {
+            csvContent += `"${command.name}","${command.quantity}","${command.size}","${command.finish}","${command.type}","${command.carton}","${command.dateAdded}","${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}"\n`;
+        });
+
+        let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        let link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "commandes_badges.csv";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    console.log("✅ exportCSV() est bien définie et attachée à window !");
+    window.exportCSV = exportCSV;  // ✅ Attachée globalement
+
+    // Vérifier si elle est bien définie après chargement
+    console.log("Test après attachement :", window.exportCSV);
+});
+
+
