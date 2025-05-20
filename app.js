@@ -1,4 +1,4 @@
-// Stockage local
+// ----------- Stockage local -----------
 const store = {
   getPatients: () => JSON.parse(localStorage.getItem('patients') || "[]"),
   savePatients: (p) => localStorage.setItem('patients', JSON.stringify(p)),
@@ -6,7 +6,7 @@ const store = {
   saveRDV: (r) => localStorage.setItem('rdv', JSON.stringify(r))
 };
 
-// Navigation entre les onglets
+// ----------- Navigation onglets -----------
 document.querySelectorAll('nav button').forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -19,7 +19,7 @@ document.querySelectorAll('nav button').forEach(btn => {
   }
 });
 
-// RENDU PATIENTS
+// ----------- Liste des patients -----------
 function renderPatientList(search = '') {
   let patients = store.getPatients();
   if (search) {
@@ -35,7 +35,7 @@ function renderPatientList(search = '') {
   list.innerHTML = patients.length ? patients.map(p => `
     <div class="patient-row" onclick="loadPatient('${p.id}')">
       <span><b>${p.nom}</b> ${p.prenom} <small style="color:grey;font-size:0.93em;">(${p.tel||''})</small></span>
-      <span style="font-size:0.9em;color:#888;">Fiche #${p.id}</span>
+      <span style="font-size:0.92em;color:#888;">Fiche #${p.id}</span>
     </div>
   `).join('') : '<i>Aucun patient.</i>';
   updatePatientSelect();
@@ -49,15 +49,18 @@ window.loadPatient = function(id) {
   document.getElementById('fiche-naissance').value = p.naissance||"";
   document.getElementById('fiche-tel').value = p.tel||"";
   document.getElementById('fiche-email').value = p.email||"";
-  document.getElementById('fiche-bilan').value = p.bilan||"";
-  document.getElementById('fiche-langue').value = p.langue||"";
-  document.getElementById('fiche-pouls').value = p.pouls||"";
+  document.getElementById('fiche-raison').value = p.raison||"";
+  document.getElementById('fiche-traitement').value = p.traitement||"";
+  document.getElementById('fiche-contraception').value = p.contraception||"";
+  document.getElementById('fiche-allergies').value = p.allergies||"";
+  document.getElementById('fiche-antecedents').value = p.antecedents||"";
   document.getElementById('fiche-consult').value = p.consult||"";
   document.getElementById('ficheSuppr').style.display = '';
   document.getElementById('ficheTitle').textContent = `Fiche de ${p.prenom} ${p.nom}`;
+  document.getElementById('fiche-nom').focus();
 };
 
-// Formulaire patient
+// ----------- Formulaire patient -----------
 document.getElementById('fichePatientForm').onsubmit = function(e) {
   e.preventDefault();
   const p = {
@@ -67,9 +70,11 @@ document.getElementById('fichePatientForm').onsubmit = function(e) {
     naissance: document.getElementById('fiche-naissance').value,
     tel: document.getElementById('fiche-tel').value.trim(),
     email: document.getElementById('fiche-email').value.trim(),
-    bilan: document.getElementById('fiche-bilan').value,
-    langue: document.getElementById('fiche-langue').value,
-    pouls: document.getElementById('fiche-pouls').value,
+    raison: document.getElementById('fiche-raison').value.trim(),
+    traitement: document.getElementById('fiche-traitement').value.trim(),
+    contraception: document.getElementById('fiche-contraception').value,
+    allergies: document.getElementById('fiche-allergies').value.trim(),
+    antecedents: document.getElementById('fiche-antecedents').value.trim(),
     consult: document.getElementById('fiche-consult').value,
   };
   let patients = store.getPatients();
@@ -78,14 +83,22 @@ document.getElementById('fichePatientForm').onsubmit = function(e) {
   store.savePatients(patients);
   renderPatientList();
   loadPatient(p.id);
-  alert('Patient enregistré.');
+  saveStatus('Patient enregistré.');
 };
+
+function saveStatus(msg) {
+  const s = document.getElementById('saveStatus');
+  s.textContent = msg;
+  s.style.color = 'var(--jade)';
+  setTimeout(()=>{ s.textContent=''; }, 1800);
+}
 
 document.getElementById('ficheNouveau').onclick = () => {
   document.getElementById('fichePatientForm').reset();
   document.getElementById('fiche-id').value = "";
   document.getElementById('ficheSuppr').style.display = "none";
   document.getElementById('ficheTitle').textContent = "Nouvelle fiche patient";
+  document.getElementById('fiche-nom').focus();
 };
 document.getElementById('ficheSuppr').onclick = () => {
   if(!confirm('Supprimer ce patient ?')) return;
@@ -96,13 +109,14 @@ document.getElementById('ficheSuppr').onclick = () => {
   document.getElementById('fichePatientForm').reset();
   document.getElementById('ficheSuppr').style.display = "none";
   document.getElementById('ficheTitle').textContent = "Fiche patient";
+  saveStatus('Patient supprimé.');
 };
 
 document.getElementById('searchPatient').oninput = function() {
   renderPatientList(this.value);
 };
 
-// Sélection patient dans RDV
+// ----------- Sélection patient dans RDV -----------
 function updatePatientSelect() {
   const patients = store.getPatients();
   const sel = document.getElementById('rdv-patient');
@@ -111,7 +125,7 @@ function updatePatientSelect() {
     patients.map(p=>`<option value="${p.id}">${p.prenom} ${p.nom}</option>`).join('');
 }
 
-// RENDEZ-VOUS
+// ----------- Gestion rendez-vous -----------
 document.getElementById('rdvForm').onsubmit = function(e) {
   e.preventDefault();
   const r = {
@@ -130,7 +144,7 @@ document.getElementById('rdvForm').onsubmit = function(e) {
   this.reset();
 };
 
-// Affichage du calendrier sur le mois courant
+// ----------- Calendrier -----------
 function renderCalendar() {
   const days = [];
   const now = new Date();
@@ -161,7 +175,7 @@ function renderCalendar() {
   updateStats();
 }
 
-// TABLEAU DE BORD
+// ----------- Tableau de bord -----------
 function renderDashboard() {
   updateStats();
   // Dernières consultations
@@ -176,7 +190,7 @@ function renderDashboard() {
     consults.length ? consults.map(c=>`
       <div style="margin-bottom:1em">
         <b>${c.prenom} ${c.nom}</b> <small style="color:#888;">(Fiche #${c.id})</small><br>
-        <span style="font-size:0.93em">${c.note.substring(0,120)}${c.note.length>120?'…':''}</span>
+        <span style="font-size:0.95em">${c.note.substring(0,120)}${c.note.length>120?'…':''}</span>
       </div>
     `).join('') : '<i>Aucune consultation récente.</i>';
 }
@@ -191,7 +205,53 @@ function updateStats() {
   document.getElementById('nbRDV').textContent = nbRDV;
 }
 
-// Init
+// ----------- Import/Export JSON -----------
+document.getElementById('btnExport').onclick = () => {
+  const data = {
+    patients: store.getPatients(),
+    rdv: store.getRDV(),
+    exportDate: new Date().toISOString()
+  };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)], {type: "application/json"}));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `patients-mtc-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{document.body.removeChild(a); URL.revokeObjectURL(url);}, 200);
+};
+
+document.getElementById('btnImport').onclick = () => {
+  document.getElementById('importFile').click();
+};
+document.getElementById('importFile').onchange = function(e) {
+  if(!this.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if(!data.patients || !Array.isArray(data.patients)) throw "Format incorrect";
+      store.savePatients(data.patients);
+      store.saveRDV(data.rdv||[]);
+      alert('Base importée.');
+      renderPatientList();
+      renderDashboard();
+      renderCalendar();
+    } catch(e) { alert('Erreur lors de l\'import.'); }
+  }
+  reader.readAsText(this.files[0]);
+};
+
+// ----------- Dark mode -----------
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+if(localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && prefersDark))
+  document.body.classList.add('dark');
+document.getElementById('btnTheme').onclick = function() {
+  document.body.classList.toggle('dark');
+  localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+};
+
+// ----------- Init -----------
 renderDashboard();
 renderPatientList();
 renderCalendar();
