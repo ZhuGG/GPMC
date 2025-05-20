@@ -1,303 +1,88 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de Bord - Production Badges</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-
-        body {
-            font-family: 'Orbitron', sans-serif;
-            background-color: #05001a;
-            color: #0ff;
-            margin: 0;
-            padding: 20px;
-            text-align: center;
-        }
-        .container {
-            max-width: 800px;
-            margin: auto;
-            background: #0a001f;
-            padding: 20px;
-            box-shadow: 0px 0px 15px #ff00ff;
-            border-radius: 8px;
-            border: 2px solid #ff00ff;
-        }
-        h1 {
-            text-shadow: 2px 2px 10px #ff00ff;
-        }
-        .command-list {
-            margin-top: 20px;
-        }
-        .command {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: flex-start;
-            background: #220044;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            color: #00ffff;
-            flex-wrap: wrap;
-            transition: all 0.3s ease-in-out;
-            border: 1px solid #ff00ff;
-        }
-        .command .actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .completed {
-            background: #008080;
-            text-decoration: line-through;
-        }
-        .paused {
-            background: #444;
-            color: #ffcc00;
-        }
-        button {
-            padding: 10px;
-            border: 2px solid #ff00ff;
-            cursor: pointer;
-            border-radius: 5px;
-            font-family: 'Orbitron', sans-serif;
-            background: #000;
-            color: #ff00ff;
-            transition: 0.2s;
-        }
-        button:hover {
-            background: #ff00ff;
-            color: #000;
-        }
-        select, input {
-            padding: 10px;
-            border: 2px solid #ff00ff;
-            border-radius: 5px;
-            width: 100%;
-            margin-bottom: 10px;
-            background: #220044;
-            color: #00ffff;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 14px;
-            text-align: center;
-        }
-        .flex-input {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .btn-container {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Gestion Patients - Médecine Chinoise</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Tableau de Bord - Production Badges</h1>
-        
-        <h2>Ajouter une Commande</h2>
-        <div class="flex-input">
-            <input type="text" id="commandInput" placeholder="Nom de la commande..." autofocus>
-            <input type="number" id="quantityInput" placeholder="Quantité" min="1">
-            <select id="sizeInput">
-                <option value="28mm">28mm</option>
-                <option value="38mm">38mm</option>
-                <option value="45mm">45mm</option>
-                <option value="58mm">58mm</option>
-                <option value="89mm">89mm</option>
-            </select>
-            <select id="finishInput">
-                <option value="Mat">Mat</option>
-                <option value="Brillant">Brillant</option>
-            </select>
-            <select id="typeInput">
-                <option value="Épingle">Épingle</option>
-                <option value="Aimant décoratif">Aimant décoratif</option>
-                <option value="Magnétique textile">Magnétique textile</option>
-                <option value="Décapsuleur magnet">Décapsuleur magnet</option>
-            </select>
-            <select id="cartonInput">
-                <option value="Boîte A11">Boîte A11</option>
-                <option value="Boîte A12">Boîte A12</option>
-                <option value="Boîte A14">Boîte A14</option>
-            </select>
-            <button onclick="addCommand()">Ajouter</button>
+  <header>
+    <span>Gestion Patients</span> — <span class="subtitle">Médecine Chinoise</span>
+  </header>
+  <nav>
+    <button class="active" data-tab="dashboard">Tableau de bord</button>
+    <button data-tab="patients">Patients</button>
+    <button data-tab="calendar">Calendrier</button>
+  </nav>
+  <main>
+    <!-- Tableau de bord -->
+    <section id="dashboard" class="tab-section">
+      <h2>Statistiques</h2>
+      <div class="stats">
+        <div class="stat-card"><b id="nbPatients">0</b><br>Patients</div>
+        <div class="stat-card"><b id="nbSessions">0</b><br>Consultations</div>
+        <div class="stat-card"><b id="nbRDV">0</b><br>Rendez-vous à venir</div>
+      </div>
+      <h3>Dernières consultations</h3>
+      <div id="lastConsults"></div>
+    </section>
+    <!-- Patients -->
+    <section id="patients" class="tab-section" style="display:none">
+      <div class="flex">
+        <div class="col" style="flex:2">
+          <h2>Patients</h2>
+          <input type="text" id="searchPatient" placeholder="Rechercher un patient..." autocomplete="off"/>
+          <div class="patient-list" id="patientList"></div>
         </div>
-
-        <h2>Commandes en cours</h2>
-        <div class="btn-container">
-            <button onclick="filterCommands('all')">Toutes</button>
-            <button onclick="filterCommands('active')">En attente</button>
-            <button onclick="filterCommands('paused')">En pause</button>
-            <button onclick="filterCommands('completed')">Terminées</button>
+        <div class="col" style="flex:3">
+          <h2 id="ficheTitle">Fiche patient</h2>
+          <form id="fichePatientForm">
+            <input type="hidden" id="fiche-id" />
+            <label>Nom <input type="text" id="fiche-nom" required /></label>
+            <label>Prénom <input type="text" id="fiche-prenom" required /></label>
+            <label>Date de naissance <input type="date" id="fiche-naissance" /></label>
+            <label>Téléphone <input type="tel" id="fiche-tel" /></label>
+            <label>Email <input type="email" id="fiche-email" /></label>
+            <label>Bilan énergétique
+              <select id="fiche-bilan">
+                <option value="">—</option>
+                <option>Vide</option>
+                <option>Plénitude</option>
+                <option>Stagnation</option>
+                <option>Déséquilibre Yin/Yang</option>
+                <option>Déséquilibre organes</option>
+              </select>
+            </label>
+            <label>Observation de la langue <textarea id="fiche-langue"></textarea></label>
+            <label>Prise de pouls <textarea id="fiche-pouls"></textarea></label>
+            <label>Notes/Consultations <textarea id="fiche-consult"></textarea></label>
+            <div>
+              <button class="btn" type="submit">Enregistrer</button>
+              <button class="btn danger" id="ficheSuppr" type="button" style="display:none">Supprimer</button>
+              <button class="btn" type="button" id="ficheNouveau">Nouveau</button>
+            </div>
+          </form>
         </div>
-
-        <button onclick="exportCSV()">CSV</button>
-
-        <div class="command-list" id="commandList"></div>
-    </div>
-
-    <script>
-        let commands = JSON.parse(localStorage.getItem("commands")) || [];
-        let currentFilter = "all";
-
-        function addCommand() {
-            let commandInput = document.getElementById("commandInput");
-            let quantityInput = document.getElementById("quantityInput");
-            let sizeInput = document.getElementById("sizeInput");
-            let finishInput = document.getElementById("finishInput");
-            let typeInput = document.getElementById("typeInput");
-            let cartonInput = document.getElementById("cartonInput");
-
-            let commandData = {
-                name: commandInput.value.trim(),
-                quantity: quantityInput.value.trim(),
-                size: sizeInput.value,
-                finish: finishInput.value,
-                type: typeInput.value,
-                carton: cartonInput.value,
-                dateAdded: new Date().toLocaleString(),
-                dateCompleted: "",
-                paused: false
-            };
-
-            if (commandData.name === "" || commandData.quantity === "") return;
-
-            commands.push(commandData);
-            saveCommands();
-            renderCommands();
-            commandInput.value = "";
-            quantityInput.value = "";
-            commandInput.focus();
-        }
-
-        function saveCommands() {
-            localStorage.setItem("commands", JSON.stringify(commands));
-        }
-
-        function renderCommands(filter = currentFilter) {
-            currentFilter = filter;
-            let commandList = document.getElementById("commandList");
-            commandList.innerHTML = "";
-
-            let filteredCommands = commands.filter(command => 
-                filter === "all" || 
-                (filter === "active" && !command.dateCompleted && !command.paused) || 
-                (filter === "paused" && command.paused) ||
-                (filter === "completed" && command.dateCompleted)
-            );
-
-            filteredCommands.forEach((command, index) => {
-                let commandDiv = document.createElement("div");
-                commandDiv.className = "command";
-                if (command.paused) commandDiv.classList.add("paused");
-                if (command.dateCompleted) commandDiv.classList.add("completed");
-
-                commandDiv.innerHTML = `
-                    <strong>${command.name}</strong>
-                    <div>
-                        Quantité : ${command.quantity}<br>
-                        Taille : ${command.size}<br>
-                        Finition : ${command.finish}<br>
-                        Attache : ${command.type}<br>
-                        Carton : ${command.carton}<br>
-                        <small>Ajouté : ${command.dateAdded}</small><br>
-                        <small>Terminé : ${command.dateCompleted ? command.dateCompleted : "En cours"}</small>
-                    </div>
-                    <div class="actions">
-                        <button onclick="completeCommand(${index})">Fait</button>
-                        <button onclick="togglePause(${index})">${command.paused ? "Reprendre" : "Pause"}</button>
-                        <button onclick="deleteCommand(${index})">Supprimer</button>
-                    </div>
-                `;
-                commandList.appendChild(commandDiv);
-            });
-        }
-
-        function completeCommand(index) {
-            // Filtrage oblige, il faut retrouver l'index réel dans le tableau commands
-            let filteredIndexes = commands.map((c, i) => i).filter(i => 
-                currentFilter === "all" ||
-                (currentFilter === "active" && !commands[i].dateCompleted && !commands[i].paused) ||
-                (currentFilter === "paused" && commands[i].paused) ||
-                (currentFilter === "completed" && commands[i].dateCompleted)
-            );
-            let realIndex = filteredIndexes[index];
-            if (commands[realIndex].dateCompleted) {
-                commands[realIndex].dateCompleted = "";
-            } else {
-                commands[realIndex].dateCompleted = new Date().toLocaleString();
-                commands[realIndex].paused = false;
-            }
-            saveCommands();
-            renderCommands();
-        }
-
-        function togglePause(index) {
-            let filteredIndexes = commands.map((c, i) => i).filter(i => 
-                currentFilter === "all" ||
-                (currentFilter === "active" && !commands[i].dateCompleted && !commands[i].paused) ||
-                (currentFilter === "paused" && commands[i].paused) ||
-                (currentFilter === "completed" && commands[i].dateCompleted)
-            );
-            let realIndex = filteredIndexes[index];
-            commands[realIndex].paused = !commands[realIndex].paused;
-            // Si on passe en pause, on enlève la complétion
-            if (commands[realIndex].paused && commands[realIndex].dateCompleted) {
-                commands[realIndex].dateCompleted = "";
-            }
-            saveCommands();
-            renderCommands();
-        }
-
-        function deleteCommand(index) {
-            let filteredIndexes = commands.map((c, i) => i).filter(i => 
-                currentFilter === "all" ||
-                (currentFilter === "active" && !commands[i].dateCompleted && !commands[i].paused) ||
-                (currentFilter === "paused" && commands[i].paused) ||
-                (currentFilter === "completed" && commands[i].dateCompleted)
-            );
-            let realIndex = filteredIndexes[index];
-            commands.splice(realIndex, 1);
-            saveCommands();
-            renderCommands();
-        }
-
-        function filterCommands(filter) {
-            renderCommands(filter);
-        }
-
-        function exportCSV() {
-            if (commands.length === 0) return;
-            const header = ["Nom", "Quantité", "Taille", "Finition", "Attache", "Carton", "Date ajout", "Date terminé", "Pause"];
-            const rows = commands.map(cmd => [
-                cmd.name,
-                cmd.quantity,
-                cmd.size,
-                cmd.finish,
-                cmd.type,
-                cmd.carton,
-                cmd.dateAdded,
-                cmd.dateCompleted,
-                cmd.paused ? "Oui" : "Non"
-            ]);
-            let csvContent = [header, ...rows].map(e => e.map(v => `"${(v||"").replace(/"/g,'""')}"`).join(";")).join("\n");
-            let blob = new Blob([csvContent], { type: "text/csv" });
-            let a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = "badges_vmach.csv";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        // Init affichage
-        renderCommands();
-    </script>
+      </div>
+    </section>
+    <!-- Calendrier -->
+    <section id="calendar" class="tab-section" style="display:none">
+      <h2>Calendrier des rendez-vous</h2>
+      <div>
+        <form id="rdvForm" style="margin-bottom:2em">
+          <label>Date <input type="date" id="rdv-date" required /></label>
+          <label>Heure <input type="time" id="rdv-heure" required /></label>
+          <label>Patient
+            <select id="rdv-patient"></select>
+          </label>
+          <label>Motif <input type="text" id="rdv-motif" /></label>
+          <button class="btn" type="submit">Ajouter RDV</button>
+        </form>
+      </div>
+      <div id="calendarDays"></div>
+    </section>
+  </main>
+  <script src="app.js"></script>
 </body>
 </html>
