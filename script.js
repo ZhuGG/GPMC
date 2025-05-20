@@ -1,251 +1,197 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const commandInput = document.getElementById("commandInput");
-    const quantityInput = document.getElementById("quantityInput");
-    const sizeInput = document.getElementById("sizeInput");
-    const finishInput = document.getElementById("finishInput");
-    const typeInput = document.getElementById("typeInput");
-    const cartonInput = document.getElementById("cartonInput");
-    const commandList = document.getElementById("commandList");
-
-    let commands = JSON.parse(localStorage.getItem("commands")) || [];
-    // Récupération des stats stockées
-let stats = JSON.parse(localStorage.getItem("stats")) || {
-    badgesToday: 0,
-    badgesWeek: 0,
-    badgesMonth: 0,
-    lastUpdate: new Date().toISOString().split('T')[0]  // Stocke la dernière mise à jour
+// Stockage local
+const store = {
+  getPatients: () => JSON.parse(localStorage.getItem('patients') || "[]"),
+  savePatients: (p) => localStorage.setItem('patients', JSON.stringify(p)),
+  getRDV: () => JSON.parse(localStorage.getItem('rdv') || "[]"),
+  saveRDV: (r) => localStorage.setItem('rdv', JSON.stringify(r))
 };
 
+// Navigation entre les onglets
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-section').forEach(sec => sec.style.display = 'none');
+    document.getElementById(btn.dataset.tab).style.display = '';
+    if(btn.dataset.tab === 'calendar') renderCalendar();
+    if(btn.dataset.tab === 'dashboard') renderDashboard();
+    if(btn.dataset.tab === 'patients') renderPatientList();
+  }
+});
+
+// RENDU PATIENTS
+function renderPatientList(search = '') {
+  let patients = store.getPatients();
+  if (search) {
+    const s = search.toLowerCase();
+    patients = patients.filter(p =>
+      p.nom.toLowerCase().includes(s) ||
+      p.prenom.toLowerCase().includes(s) ||
+      (p.tel||"").includes(s) ||
+      (p.id+'').includes(s)
+    );
+  }
+  const list = document.getElementById('patientList');
+  list.innerHTML = patients.length ? patients.map(p => `
+    <div class="patient-row" onclick="loadPatient('${p.id}')">
+      <span><b>${p.nom}</b> ${p.prenom} <small style="color:grey;font-size:0.93em;">(${p.tel||''})</small></span>
+      <span style="font-size:0.9em;color:#888;">Fiche #${p.id}</span>
+    </div>
+  `).join('') : '<i>Aucun patient.</i>';
+  updatePatientSelect();
+}
+window.loadPatient = function(id) {
+  const p = store.getPatients().find(x=>x.id==id);
+  if(!p) return;
+  document.getElementById('fiche-id').value = p.id;
+  document.getElementById('fiche-nom').value = p.nom;
+  document.getElementById('fiche-prenom').value = p.prenom;
+  document.getElementById('fiche-naissance').value = p.naissance||"";
+  document.getElementById('fiche-tel').value = p.tel||"";
+  document.getElementById('fiche-email').value = p.email||"";
+  document.getElementById('fiche-bilan').value = p.bilan||"";
+  document.getElementById('fiche-langue').value = p.langue||"";
+  document.getElementById('fiche-pouls').value = p.pouls||"";
+  document.getElementById('fiche-consult').value = p.consult||"";
+  document.getElementById('ficheSuppr').style.display = '';
+  document.getElementById('ficheTitle').textContent = `Fiche de ${p.prenom} ${p.nom}`;
+};
+
+// Formulaire patient
+document.getElementById('fichePatientForm').onsubmit = function(e) {
+  e.preventDefault();
+  const p = {
+    id: document.getElementById('fiche-id').value || (''+Date.now()),
+    nom: document.getElementById('fiche-nom').value.trim(),
+    prenom: document.getElementById('fiche-prenom').value.trim(),
+    naissance: document.getElementById('fiche-naissance').value,
+    tel: document.getElementById('fiche-tel').value.trim(),
+    email: document.getElementById('fiche-email').value.trim(),
+    bilan: document.getElementById('fiche-bilan').value,
+    langue: document.getElementById('fiche-langue').value,
+    pouls: document.getElementById('fiche-pouls').value,
+    consult: document.getElementById('fiche-consult').value,
+  };
+  let patients = store.getPatients();
+  const i = patients.findIndex(x=>x.id==p.id);
+  if(i>-1) patients[i] = p; else patients.push(p);
+  store.savePatients(patients);
+  renderPatientList();
+  loadPatient(p.id);
+  alert('Patient enregistré.');
+};
+
+document.getElementById('ficheNouveau').onclick = () => {
+  document.getElementById('fichePatientForm').reset();
+  document.getElementById('fiche-id').value = "";
+  document.getElementById('ficheSuppr').style.display = "none";
+  document.getElementById('ficheTitle').textContent = "Nouvelle fiche patient";
+};
+document.getElementById('ficheSuppr').onclick = () => {
+  if(!confirm('Supprimer ce patient ?')) return;
+  const id = document.getElementById('fiche-id').value;
+  let patients = store.getPatients().filter(p=>p.id!=id);
+  store.savePatients(patients);
+  renderPatientList();
+  document.getElementById('fichePatientForm').reset();
+  document.getElementById('ficheSuppr').style.display = "none";
+  document.getElementById('ficheTitle').textContent = "Fiche patient";
+};
+
+document.getElementById('searchPatient').oninput = function() {
+  renderPatientList(this.value);
+};
+
+// Sélection patient dans RDV
+function updatePatientSelect() {
+  const patients = store.getPatients();
+  const sel = document.getElementById('rdv-patient');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Choisir...</option>' +
+    patients.map(p=>`<option value="${p.id}">${p.prenom} ${p.nom}</option>`).join('');
+}
+
+// RENDEZ-VOUS
+document.getElementById('rdvForm').onsubmit = function(e) {
+  e.preventDefault();
+  const r = {
+    id: ''+Date.now(),
+    date: document.getElementById('rdv-date').value,
+    heure: document.getElementById('rdv-heure').value,
+    patientId: document.getElementById('rdv-patient').value,
+    motif: document.getElementById('rdv-motif').value,
+  };
+  if(!r.patientId) return alert("Sélectionner un patient.");
+  let rdv = store.getRDV();
+  rdv.push(r);
+  store.saveRDV(rdv);
+  renderCalendar();
+  alert('Rendez-vous ajouté.');
+  this.reset();
+};
+
+// Affichage du calendrier sur le mois courant
+function renderCalendar() {
+  const days = [];
+  const now = new Date();
+  const first = new Date(now.getFullYear(), now.getMonth(), 1);
+  const last = new Date(now.getFullYear(), now.getMonth()+1, 0);
+  const startDay = first.getDay()||7;
+  for(let i=1; i<startDay; ++i) days.push('');
+  for(let i=1; i<=last.getDate(); ++i) days.push(i);
+  const rdv = store.getRDV().filter(r=>{
+    const d = new Date(r.date);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const patients = store.getPatients();
+  let html = '<div class="calendar">';
+  for(let i=0;i<days.length;++i) {
+    html += `<div class="calendar-day">` + (days[i]?`<b>${days[i]}</b>`:'');
+    if(days[i]) {
+      const dateStr = now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'))+'-'+String(days[i]).padStart(2,'0');
+      rdv.filter(r=>r.date==dateStr).forEach(r=>{
+        const p = patients.find(p=>p.id==r.patientId);
+        html += `<span class="rdv">${r.heure||''} ${p?p.prenom+' '+p.nom:''}<br>${r.motif||''}</span>`;
+      });
+    }
+    html += `</div>`;
+  }
+  html += '</div>';
+  document.getElementById('calendarDays').innerHTML = html;
+  updateStats();
+}
+
+// TABLEAU DE BORD
+function renderDashboard() {
+  updateStats();
+  // Dernières consultations
+  let patients = store.getPatients();
+  let consults = [];
+  patients.forEach(p=>{
+    if(p.consult && p.consult.trim())
+      consults.push({ ...p, note: p.consult, ts: Number(p.id) });
+  });
+  consults = consults.sort((a,b)=>b.ts-a.ts).slice(0,4);
+  document.getElementById('lastConsults').innerHTML =
+    consults.length ? consults.map(c=>`
+      <div style="margin-bottom:1em">
+        <b>${c.prenom} ${c.nom}</b> <small style="color:#888;">(Fiche #${c.id})</small><br>
+        <span style="font-size:0.93em">${c.note.substring(0,120)}${c.note.length>120?'…':''}</span>
+      </div>
+    `).join('') : '<i>Aucune consultation récente.</i>';
+}
+
 function updateStats() {
-    let today = new Date().toISOString().split('T')[0]; // Date du jour
-    let currentWeek = getWeekNumber(new Date());  // Numéro de la semaine actuelle
-    let currentMonth = new Date().getMonth(); // Mois actuel
-
-    let badgesToday = 0, badgesWeek = 0, badgesMonth = 0;
-
-    commands.forEach(command => {
-        if (!command.completed) return;  // On ne compte que les commandes terminées
-
-       if (!command.dateAdded || isNaN(new Date(command.dateAdded).getTime())) {
-    console.warn("Commande avec date invalide ignorée :", command);
-    return;  // Ignore cette commande si la date est invalide
-}
-let commandDate = new Date(command.dateAdded).toISOString().split('T')[0];
-
-        let commandWeek = getWeekNumber(new Date(command.dateAdded));
-        let commandMonth = new Date(command.dateAdded).getMonth();
-
-        if (commandDate === today) {
-            badgesToday += parseInt(command.quantity);
-        }
-        if (commandWeek === currentWeek) {
-            badgesWeek += parseInt(command.quantity);
-        }
-        if (commandMonth === currentMonth) {
-            badgesMonth += parseInt(command.quantity);
-        }
-    });
-
-    stats.badgesToday = badgesToday;
-    stats.badgesWeek = badgesWeek;
-    stats.badgesMonth = badgesMonth;
-    stats.lastUpdate = today;
-
-    localStorage.setItem("stats", JSON.stringify(stats));
-
-    document.getElementById("badgesToday").textContent = badgesToday;
-    document.getElementById("badgesWeek").textContent = badgesWeek;
-    document.getElementById("badgesMonth").textContent = badgesMonth;
+  const patients = store.getPatients();
+  const rdv = store.getRDV();
+  let nbConsults = patients.reduce((acc, p) => acc + (p.consult && p.consult.trim() ? 1 : 0), 0);
+  let nbRDV = rdv.filter(r => new Date(r.date) >= new Date()).length;
+  document.getElementById('nbPatients').textContent = patients.length;
+  document.getElementById('nbSessions').textContent = nbConsults;
+  document.getElementById('nbRDV').textContent = nbRDV;
 }
 
-
-// Fonction pour récupérer le numéro de la semaine
-function getWeekNumber(d) {
-    let date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    let dayNum = date.getUTCDay() || 7;
-    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-    let yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-    return Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
-}
-
-// Appel de la mise à jour des stats au démarrage
-updateStats();
-
-
-    function renderCommands(filter = "all") {
-        commandList.innerHTML = "";
-
-        let filteredCommands = commands.filter(command => 
-            filter === "all" || 
-            (filter === "active" && !command.completed && !command.paused) || 
-            (filter === "paused" && command.paused) ||
-            (filter === "completed" && command.completed)
-        );
-
-        filteredCommands.forEach((command, index) => {
-            let commandDiv = document.createElement("div");
-            commandDiv.className = "command";
-            if (command.paused) commandDiv.classList.add("paused");
-            if (command.completed) commandDiv.classList.add("completed");
-
-            commandDiv.innerHTML = `
-                <span>${command.name} - ${command.quantity} badges (${command.size})</span>
-                <br><small>Finition : ${command.finish} | Type : ${command.type} | Carton : ${command.carton}</small>
-                <br><small>Ajouté : ${command.dateAdded}</small>
-                <br><small>Statut : ${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}</small>
-                <div class="btn-container">
-                    <button onclick="completeCommand(${index})">${command.completed ? "Annuler" : "Fait"}</button>
-                    <button onclick="togglePause(${index})">${command.paused ? "Reprendre" : "Pause"}</button>
-                    <button onclick="deleteCommand(${index})">Supprimer</button>
-                </div>
-            `;
-            commandList.appendChild(commandDiv);
-        });
-    }
-
-    function addCommand() {
-        let commandData = {
-            name: commandInput.value.trim(),
-            quantity: quantityInput.value.trim(),
-            size: sizeInput.value,
-            finish: finishInput.value,
-            type: typeInput.value,
-            carton: cartonInput.value,
-            dateAdded: new Date().toISOString(),
-
-            completed: false,
-            paused: false
-        };
-
-        if (commandData.name === "" || commandData.quantity === "") return;
-
-        commands.push(commandData);
-        saveCommands();
-        //updateStats();
-     
-
-        renderCommands();
-        commandInput.value = "";
-        quantityInput.value = "";
-        commandInput.focus();
-    }
-
-    function completeCommand(index) {
-        commands[index].completed = !commands[index].completed;
-        commands[index].paused = false;  // Annule la pause si terminé
-        saveCommands();
-        console.log("Mise à jour des stats exécutée !");
-//updateStats();
-       
-
-        renderCommands();
-    }
-
-    function togglePause(index) {
-        commands[index].paused = !commands[index].paused;
-        commands[index].completed = false;  // Annule "Terminé" si mis en pause
-        saveCommands();
-        renderCommands();
-    }
-
-    function deleteCommand(index) {
-        commands.splice(index, 1);
-        saveCommands();
-        //updateStats();
-        
-
-        renderCommands();
-    }
-
-    function saveCommands() {
-        localStorage.setItem("commands", JSON.stringify(commands));
-    }
-
-function exportCSV() {
-    if (commands.length === 0) {
-        alert("Aucune commande à exporter.");
-        return;
-    }
-
-    let csvContent = "data:text/csv;charset=utf-8,Nom,Quantité,Taille,Type,Finition,Carton,Date Ajoutée,Date Terminée\n";
-    commands.forEach(command => {
-        csvContent += `${command.name},${command.quantity},${command.size},${command.type},${command.finish},${command.carton},${command.dateAdded},${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}\n`;
-    });
-
-    let link = document.createElement("a");
-    link.href = encodeURI(csvContent);
-    link.download = "commandes_badges.csv";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-// ✅ Exposer exportCSV() à `window` pour qu'il soit accessible dans `index.html`
-document.addEventListener("DOMContentLoaded", function () {
-    function exportCSV() {
-        if (commands.length === 0) {
-            alert("Aucune commande à exporter.");
-            return;
-        }
-
-        let csvContent = "Nom,Quantité,Taille,Finition,Type,Carton,Date ajoutée,Statut\n";
-        commands.forEach(command => {
-            csvContent += `"${command.name}","${command.quantity}","${command.size}","${command.finish}","${command.type}","${command.carton}","${command.dateAdded}","${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}"\n`;
-        });
-
-        let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        let link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "commandes_badges.csv";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    // Assigner la fonction à window APRÈS sa déclaration
-    window.exportCSV = exportCSV;
-});
-
-console.log("✅ exportCSV() est bien accessible via window !");
-
-
-    window.addCommand = addCommand;
-    window.completeCommand = completeCommand;
-    window.togglePause = togglePause;
-    window.deleteCommand = deleteCommand;
-    window.renderCommands = renderCommands;
-    window.exportToCSV = exportToCSV;
-
-    renderCommands();
-});
-
-window.exportToCSV = exportToCSV;
-
-document.addEventListener("DOMContentLoaded", function () {
-    function exportCSV() {
-        if (commands.length === 0) {
-            alert("Aucune commande à exporter.");
-            return;
-        }
-
-        let csvContent = "Nom,Quantité,Taille,Finition,Type,Carton,Date ajoutée,Statut\n";
-        commands.forEach(command => {
-            csvContent += `"${command.name}","${command.quantity}","${command.size}","${command.finish}","${command.type}","${command.carton}","${command.dateAdded}","${command.completed ? "Terminé" : command.paused ? "En pause" : "En cours"}"\n`;
-        });
-
-        let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        let link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "commandes_badges.csv";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    console.log("✅ exportCSV() est bien définie et attachée à window !");
-    window.exportCSV = exportCSV;  // ✅ Attachée globalement
-
-    // Vérifier si elle est bien définie après chargement
-    console.log("Test après attachement :", window.exportCSV);
-});
-
+// Init
+renderDashboard();
+renderPatientList();
+renderCalendar();
