@@ -32,8 +32,9 @@
         }
         .command {
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             background: #220044;
             padding: 10px;
             border-radius: 5px;
@@ -42,6 +43,11 @@
             flex-wrap: wrap;
             transition: all 0.3s ease-in-out;
             border: 1px solid #ff00ff;
+        }
+        .command .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
         }
         .completed {
             background: #008080;
@@ -94,68 +100,67 @@
     <div class="container">
         <h1>Tableau de Bord - Production Badges</h1>
         
-      <!-- <h2>Statistiques de Production</h2>
-<div class="stats">
-    <p>🔹 Badges produits aujourd'hui : <span id="badgesToday">0</span></p>
-    <p>🔹 Badges produits cette semaine : <span id="badgesWeek">0</span></p>
-    <p>🔹 Badges produits ce mois-ci : <span id="badgesMonth">0</span></p>
-</div>-->
-
-        
         <h2>Ajouter une Commande</h2>
-<div class="flex-input">
-    <input type="text" id="commandInput" placeholder="Nom de la commande..." autofocus>
-    <input type="number" id="quantityInput" placeholder="Quantité" min="1">
-    <select id="sizeInput">
-        <option value="28mm">28mm</option>
-        <option value="38mm">38mm</option>
-        <option value="45mm">45mm</option>
-        <option value="58mm">58mm</option>
-        <option value="89mm">89mm</option>
-    </select>
-    <select id="finishInput">
-        <option value="Mat">Mat</option>
-        <option value="Brillant">Brillant</option>
-    </select>
-    <select id="typeInput">
-        <option value="Épingle">Épingle</option>
-        <option value="Aimant décoratif">Aimant décoratif</option>
-        <option value="Magnétique textile">Magnétique textile</option>
-        <option value="Décapsuleur magnet">Décapsuleur magnet</option>
-    </select>
-    <select id="cartonInput">
-        <option value="Boîte A11">Boîte A11</option>
-        <option value="Boîte A12">Boîte A12</option>
-        <option value="Boîte A14">Boîte A14</option>
-    </select>
-    <button onclick="addCommand()">Ajouter</button>
-</div>
+        <div class="flex-input">
+            <input type="text" id="commandInput" placeholder="Nom de la commande..." autofocus>
+            <input type="number" id="quantityInput" placeholder="Quantité" min="1">
+            <select id="sizeInput">
+                <option value="28mm">28mm</option>
+                <option value="38mm">38mm</option>
+                <option value="45mm">45mm</option>
+                <option value="58mm">58mm</option>
+                <option value="89mm">89mm</option>
+            </select>
+            <select id="finishInput">
+                <option value="Mat">Mat</option>
+                <option value="Brillant">Brillant</option>
+            </select>
+            <select id="typeInput">
+                <option value="Épingle">Épingle</option>
+                <option value="Aimant décoratif">Aimant décoratif</option>
+                <option value="Magnétique textile">Magnétique textile</option>
+                <option value="Décapsuleur magnet">Décapsuleur magnet</option>
+            </select>
+            <select id="cartonInput">
+                <option value="Boîte A11">Boîte A11</option>
+                <option value="Boîte A12">Boîte A12</option>
+                <option value="Boîte A14">Boîte A14</option>
+            </select>
+            <button onclick="addCommand()">Ajouter</button>
+        </div>
 
-<h2>Commandes en cours</h2>
-<div class="btn-container">
-    <button onclick="filterCommands('all')">Toutes</button>
-    <button onclick="filterCommands('active')">En attente</button>
-    <button onclick="filterCommands('paused')">En pause</button>
-    <button onclick="filterCommands('completed')">Terminées</button>
-</div>
+        <h2>Commandes en cours</h2>
+        <div class="btn-container">
+            <button onclick="filterCommands('all')">Toutes</button>
+            <button onclick="filterCommands('active')">En attente</button>
+            <button onclick="filterCommands('paused')">En pause</button>
+            <button onclick="filterCommands('completed')">Terminées</button>
+        </div>
 
-<button onclick="exportCSV()">CSV</button>
+        <button onclick="exportCSV()">CSV</button>
 
-<div class="command-list" id="commandList"></div>
-
+        <div class="command-list" id="commandList"></div>
+    </div>
 
     <script>
         let commands = JSON.parse(localStorage.getItem("commands")) || [];
+        let currentFilter = "all";
 
         function addCommand() {
             let commandInput = document.getElementById("commandInput");
             let quantityInput = document.getElementById("quantityInput");
             let sizeInput = document.getElementById("sizeInput");
+            let finishInput = document.getElementById("finishInput");
+            let typeInput = document.getElementById("typeInput");
+            let cartonInput = document.getElementById("cartonInput");
 
             let commandData = {
                 name: commandInput.value.trim(),
                 quantity: quantityInput.value.trim(),
                 size: sizeInput.value,
+                finish: finishInput.value,
+                type: typeInput.value,
+                carton: cartonInput.value,
                 dateAdded: new Date().toLocaleString(),
                 dateCompleted: "",
                 paused: false
@@ -175,7 +180,8 @@
             localStorage.setItem("commands", JSON.stringify(commands));
         }
 
-        function renderCommands(filter = "all") {
+        function renderCommands(filter = currentFilter) {
+            currentFilter = filter;
             let commandList = document.getElementById("commandList");
             commandList.innerHTML = "";
 
@@ -193,38 +199,105 @@
                 if (command.dateCompleted) commandDiv.classList.add("completed");
 
                 commandDiv.innerHTML = `
-                    <span>${command.name} - ${command.quantity} badges (${command.size})</span>
-                    <br><small>Ajouté : ${command.dateAdded}</small>
-                    <br><small>Terminé : ${command.dateCompleted ? command.dateCompleted : "En cours"}</small>
-                    <button onclick="completeCommand(${index})">Fait</button>
-                    <button onclick="togglePause(${index})">${command.paused ? "Reprendre" : "Pause"}</button>
-                    <button onclick="deleteCommand(${index})">Supprimer</button>
+                    <strong>${command.name}</strong>
+                    <div>
+                        Quantité : ${command.quantity}<br>
+                        Taille : ${command.size}<br>
+                        Finition : ${command.finish}<br>
+                        Attache : ${command.type}<br>
+                        Carton : ${command.carton}<br>
+                        <small>Ajouté : ${command.dateAdded}</small><br>
+                        <small>Terminé : ${command.dateCompleted ? command.dateCompleted : "En cours"}</small>
+                    </div>
+                    <div class="actions">
+                        <button onclick="completeCommand(${index})">Fait</button>
+                        <button onclick="togglePause(${index})">${command.paused ? "Reprendre" : "Pause"}</button>
+                        <button onclick="deleteCommand(${index})">Supprimer</button>
+                    </div>
                 `;
                 commandList.appendChild(commandDiv);
             });
         }
 
         function completeCommand(index) {
-            commands[index].dateCompleted = commands[index].dateCompleted ? "" : new Date().toLocaleString();
+            // Filtrage oblige, il faut retrouver l'index réel dans le tableau commands
+            let filteredIndexes = commands.map((c, i) => i).filter(i => 
+                currentFilter === "all" ||
+                (currentFilter === "active" && !commands[i].dateCompleted && !commands[i].paused) ||
+                (currentFilter === "paused" && commands[i].paused) ||
+                (currentFilter === "completed" && commands[i].dateCompleted)
+            );
+            let realIndex = filteredIndexes[index];
+            if (commands[realIndex].dateCompleted) {
+                commands[realIndex].dateCompleted = "";
+            } else {
+                commands[realIndex].dateCompleted = new Date().toLocaleString();
+                commands[realIndex].paused = false;
+            }
             saveCommands();
             renderCommands();
         }
 
         function togglePause(index) {
-            commands[index].paused = !commands[index].paused;
+            let filteredIndexes = commands.map((c, i) => i).filter(i => 
+                currentFilter === "all" ||
+                (currentFilter === "active" && !commands[i].dateCompleted && !commands[i].paused) ||
+                (currentFilter === "paused" && commands[i].paused) ||
+                (currentFilter === "completed" && commands[i].dateCompleted)
+            );
+            let realIndex = filteredIndexes[index];
+            commands[realIndex].paused = !commands[realIndex].paused;
+            // Si on passe en pause, on enlève la complétion
+            if (commands[realIndex].paused && commands[realIndex].dateCompleted) {
+                commands[realIndex].dateCompleted = "";
+            }
             saveCommands();
             renderCommands();
         }
 
         function deleteCommand(index) {
-            commands.splice(index, 1);
+            let filteredIndexes = commands.map((c, i) => i).filter(i => 
+                currentFilter === "all" ||
+                (currentFilter === "active" && !commands[i].dateCompleted && !commands[i].paused) ||
+                (currentFilter === "paused" && commands[i].paused) ||
+                (currentFilter === "completed" && commands[i].dateCompleted)
+            );
+            let realIndex = filteredIndexes[index];
+            commands.splice(realIndex, 1);
             saveCommands();
             renderCommands();
         }
 
+        function filterCommands(filter) {
+            renderCommands(filter);
+        }
+
+        function exportCSV() {
+            if (commands.length === 0) return;
+            const header = ["Nom", "Quantité", "Taille", "Finition", "Attache", "Carton", "Date ajout", "Date terminé", "Pause"];
+            const rows = commands.map(cmd => [
+                cmd.name,
+                cmd.quantity,
+                cmd.size,
+                cmd.finish,
+                cmd.type,
+                cmd.carton,
+                cmd.dateAdded,
+                cmd.dateCompleted,
+                cmd.paused ? "Oui" : "Non"
+            ]);
+            let csvContent = [header, ...rows].map(e => e.map(v => `"${(v||"").replace(/"/g,'""')}"`).join(";")).join("\n");
+            let blob = new Blob([csvContent], { type: "text/csv" });
+            let a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "badges_vmach.csv";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // Init affichage
         renderCommands();
     </script>
-         <script src="script.js"></script>
 </body>
-   
 </html>
