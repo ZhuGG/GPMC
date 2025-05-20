@@ -2,13 +2,24 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Gestion Patients - Médecine Chinoise</title>
+  <title>Gestion Patients — Médecine Chinoise</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <span>Gestion Patients</span> — <span class="subtitle">Médecine Chinoise</span>
+    <div class="head-left">
+      <span class="logo">🌱</span>
+      <span>Gestion Patients</span>
+      <span class="subtitle">Médecine Chinoise</span>
+    </div>
+    <div class="head-right">
+      <button id="btnTheme" title="Basculer thème">🌙</button>
+      <button id="btnExport" title="Exporter base">⤓</button>
+      <button id="btnImport" title="Importer base">⤒</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" />
+    </div>
   </header>
   <nav>
     <button class="active" data-tab="dashboard">Tableau de bord</button>
@@ -37,31 +48,34 @@
         </div>
         <div class="col" style="flex:3">
           <h2 id="ficheTitle">Fiche patient</h2>
-          <form id="fichePatientForm">
+          <form id="fichePatientForm" autocomplete="off">
             <input type="hidden" id="fiche-id" />
             <label>Nom <input type="text" id="fiche-nom" required /></label>
             <label>Prénom <input type="text" id="fiche-prenom" required /></label>
             <label>Date de naissance <input type="date" id="fiche-naissance" /></label>
             <label>Téléphone <input type="tel" id="fiche-tel" /></label>
             <label>Email <input type="email" id="fiche-email" /></label>
-            <label>Bilan énergétique
-              <select id="fiche-bilan">
+            <label>Raison de la visite <input type="text" id="fiche-raison" /></label>
+            <label>Traitement en cours <input type="text" id="fiche-traitement" /></label>
+            <label>Contraception
+              <select id="fiche-contraception">
                 <option value="">—</option>
-                <option>Vide</option>
-                <option>Plénitude</option>
-                <option>Stagnation</option>
-                <option>Déséquilibre Yin/Yang</option>
-                <option>Déséquilibre organes</option>
+                <option>Non</option>
+                <option>Oui - Pilule</option>
+                <option>Oui - Stérilet</option>
+                <option>Oui - Implant</option>
+                <option>Oui - Autre</option>
               </select>
             </label>
-            <label>Observation de la langue <textarea id="fiche-langue"></textarea></label>
-            <label>Prise de pouls <textarea id="fiche-pouls"></textarea></label>
+            <label>Allergies <input type="text" id="fiche-allergies" /></label>
+            <label>Antécédents <input type="text" id="fiche-antecedents" /></label>
             <label>Notes/Consultations <textarea id="fiche-consult"></textarea></label>
-            <div>
+            <div class="form-actions">
               <button class="btn" type="submit">Enregistrer</button>
               <button class="btn danger" id="ficheSuppr" type="button" style="display:none">Supprimer</button>
               <button class="btn" type="button" id="ficheNouveau">Nouveau</button>
             </div>
+            <div id="saveStatus" class="save-status"></div>
           </form>
         </div>
       </div>
